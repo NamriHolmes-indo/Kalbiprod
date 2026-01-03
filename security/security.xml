@@ -1,6 +1,0 @@
-<odoo>
-    <record id="group_kalbiprod_manager" model="res.groups">
-        <field name="name">Kalbiprod Manager</field>
-        <field name="category_id" ref="base.module_category_sales_management"/>
-    </record>
-</odoo>

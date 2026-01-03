@@ -10,37 +10,26 @@
                     <group>
                         <field name="name"/>
                         <field name="date"/>
-                        <field name="state" widget="statusbar"
-                            statusbar_visible="draft,review,approved"/>
-                        <button string="Ajukan ke Manager"
-                            type="object"
-                            name="action_submit_review"
-                            invisible="not can_submit_review"
-                            class="btn-secondary"/>
                     </group>
                     <!-- MAIN NOTEBOOK -->
                     <notebook>
                         <!-- TAB 1: LIST PRODUK -->
                         <page string="List Produk">
                             <field name="line_ids"
-                                readonly="not can_edit"
                                 context="{'list_view_ref': 'simple_pricing_order.view_simple_pricing_order_line_list'}"/>
                         </page>
                         <!-- TAB 2: VARIABEL JUAL TAMBAHAN -->
                         <page string="Variabel Jual Tambahan">
-                            <field name="extra_line_ids"
-                                readonly="not can_edit">
+                            <field name="extra_line_ids">
                                 <list editable="bottom">
                                     <field name="name"/>
                                     <field name="percent"/>
-                                    <field name="amount"
-                                           widget="monetary"/>
+                                    <field name="amount" widget="monetary"/>
                                 </list>
                             </field>
                         </page>
                         <!-- TAB 3: RANGKUMAN -->
-                        <page string="Rekomendasi Harga Jual"
-                            groups="kalbiprod.group_kalbiprod_manager,kalbiprod.group_kalbiprod_rnd">
+                        <page string="Rekomendasi Harga Jual">
                             <group>
                                 <field name="optimal_margin"
                                     string="Markup Optimal (%)"
@@ -56,8 +45,7 @@
                                 <button string="Pilih"
                                     type="object"
                                     name="action_select_price"
-                                    context="{'strategy': 'full'}"
-                                    invisible="not can_select_price"
+                                    context="{'strategy': 'none'}"
                                     class="btn-primary"/>
                             </div>
                             <!-- MARKUP 1/2 -->
@@ -69,8 +57,7 @@
                                 <button string="Pilih"
                                     type="object"
                                     name="action_select_price"
-                                    context="{'strategy': 'full'}"
-                                    invisible="not can_select_price"
+                                    context="{'strategy': 'half'}"
                                     class="btn-primary"/>
                             </div>
                             <!-- MARKUP OPTIMAL -->
@@ -83,7 +70,6 @@
                                     type="object"
                                     name="action_select_price"
                                     context="{'strategy': 'full'}"
-                                    invisible="not can_select_price"
                                     class="btn-primary"/>
                             </div>
                             <p class="text-muted">
@@ -92,7 +78,7 @@
                         </page>
                     </notebook>
                     <!-- FOOTER TOTAL -->
-                    <group class="oe_subtotal_footer oe_left">
+                    <group class="oe_subtotal_footer oe_right">
                         <field name="currency_id" invisible="1"/>
                         <field name="amount_untaxed"
                                string="Total Bahan"

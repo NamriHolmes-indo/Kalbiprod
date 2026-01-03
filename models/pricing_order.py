@@ -1,5 +1,4 @@
 from odoo import models, fields, api
-from odoo.exceptions import AccessError
 
 
 class SimplePricingOrder(models.Model):
@@ -123,39 +122,6 @@ class SimplePricingOrder(models.Model):
         readonly=True,
     )
 
-    state = fields.Selection(
-        [
-            ("draft", "Draft (R&D)"),
-            ("review", "Menunggu Approval"),
-            ("approved", "Approved"),
-        ],
-        default="draft",
-        tracking=True,
-    )
-
-    can_edit = fields.Boolean(compute="_compute_can_edit")
-    can_select_price = fields.Boolean(compute="_compute_can_select_price")
-    can_submit_review = fields.Boolean(compute="_compute_can_submit_review")
-
-    def _compute_can_edit(self):
-        for rec in self:
-            rec.can_edit = rec.state != "approved"
-
-    def _compute_can_select_price(self):
-        for rec in self:
-            rec.can_select_price = rec.state != "approved" and rec.env.user.has_group(
-                "kalbiprod.group_kalbiprod_manager"
-            )
-
-    def _compute_can_submit_review(self):
-        for rec in self:
-            rec.can_submit_review = rec.state == "draft" and rec.env.user.has_group(
-                "kalbiprod.group_kalbiprod_rnd"
-            )
-
-    def action_submit_review(self):
-        self.write({"state": "review"})
-
     @api.depends("line_ids.subtotal", "line_ids.tax_amount", "extra_line_ids.amount")
     def _compute_amount(self):
         for order in self:
@@ -250,25 +216,22 @@ class SimplePricingOrder(models.Model):
             self.name = self.title
 
     def action_select_price(self):
-        if not self.env.user.has_group("kalbiprod.group_kalbiprod_manager"):
-            raise AccessError("Hanya Manager yang boleh memilih harga jual.")
+        self.ensure_one()
 
         strategy = self.env.context.get("strategy")
 
-        for order in self:
-            if strategy == "none":
-                order.selected_price = order.price_no_markup
-            elif strategy == "half":
-                order.selected_price = order.price_half_markup
-            elif strategy == "full":
-                order.selected_price = order.price_full_markup
+        price_map = {
+            "none": self.price_no_markup,
+            "half": self.price_half_markup,
+            "full": self.price_full_markup,
+        }
 
-            order.selected_strategy = strategy
-            order.state = "approved"
-
-            order.message_post(
-                body=f"Harga diset oleh Manager ({strategy}) sebesar {order.selected_price}"
-            )
+        self.write(
+            {
+                "selected_price": price_map.get(strategy, 0.0),
+                "selected_strategy": strategy,
+            }
+        )
 
 
 class SimplePricingOrderLine(models.Model):
@@ -327,8 +290,10 @@ class SimplePricingOrderExtra(models.Model):
     _name = "simple.pricing.order.extra"
     _description = "Pricing Extra Variable"
     _sql_constraints = [
-        models.Constraint(
-            "UNIQUE(order_id, is_default_packing)", "Default packing hanya boleh satu."
+        (
+            "unique_default_packing_per_order",
+            "unique(order_id, is_default_packing)",
+            "Default packing hanya boleh satu.",
         )
     ]
 

@@ -7,7 +7,6 @@
     "license": "LGPL-3",
     "depends": ["product", "account"],
     "data": [
-        "security/groups.xml",
         "security/ir.model.access.csv",
         "data/sequence.xml",
         "views/pricing_order_view.xml",

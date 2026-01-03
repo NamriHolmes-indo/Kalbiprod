@@ -1,8 +1,0 @@
-<odoo>
-    <record id="group_kalbiprod_rnd" model="res.groups">
-        <field name="name">Kalbiprod R&amp;D</field>
-    </record>
-    <record id="group_kalbiprod_manager" model="res.groups">
-        <field name="name">Kalbiprod Manager</field>
-    </record>
-</odoo>
