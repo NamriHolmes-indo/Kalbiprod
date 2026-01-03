@@ -1,0 +1,10 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+
+access_pricing_order_rnd,simple.pricing.order.rnd,model_simple_pricing_order,kalbiprod.group_kalbiprod_rnd,1,1,1,0
+access_pricing_order_manager,simple.pricing.order.manager,model_simple_pricing_order,kalbiprod.group_kalbiprod_manager,1,1,1,1
+
+access_pricing_line_rnd,simple.pricing.order.line.rnd,model_simple_pricing_order_line,kalbiprod.group_kalbiprod_rnd,1,1,1,0
+access_pricing_line_manager,simple.pricing.order.line.manager,model_simple_pricing_order_line,kalbiprod.group_kalbiprod_manager,1,1,1,1
+
+access_pricing_extra_rnd,pricing.extra.rnd,model_simple_pricing_order_extra,kalbiprod.group_kalbiprod_rnd,1,1,1,0
+access_pricing_extra_manager,pricing.extra.manager,model_simple_pricing_order_extra,kalbiprod.group_kalbiprod_manager,1,1,1,1

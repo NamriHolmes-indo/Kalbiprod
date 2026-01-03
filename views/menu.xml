@@ -1,0 +1,8 @@
+<odoo>
+    <menuitem id="menu_simple_pricing_root"
+              name="Kalbiprod"/>
+    <menuitem id="menu_simple_pricing_order"
+              name="Kalkulator Harga"
+              parent="menu_simple_pricing_root"
+              action="action_simple_pricing_order"/>
+</odoo>

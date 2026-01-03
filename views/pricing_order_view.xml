@@ -1,0 +1,167 @@
+<odoo>
+    <!-- FORM VIEW -->
+    <record id="view_simple_pricing_order_form" model="ir.ui.view">
+        <field name="name">simple.pricing.order.form</field>
+        <field name="model">simple.pricing.order</field>
+        <field name="arch" type="xml">
+            <form string="Pricing Document">
+                <sheet>
+                    <!-- HEADER -->
+                    <group>
+                        <field name="name"/>
+                        <field name="date"/>
+                        <field name="state" widget="statusbar"
+                            statusbar_visible="draft,review,approved"/>
+                        <button string="Ajukan ke Manager"
+                            type="object"
+                            name="action_submit_review"
+                            invisible="not can_submit_review"
+                            class="btn-secondary"/>
+                    </group>
+                    <!-- MAIN NOTEBOOK -->
+                    <notebook>
+                        <!-- TAB 1: LIST PRODUK -->
+                        <page string="List Produk">
+                            <field name="line_ids"
+                                readonly="not can_edit"
+                                context="{'list_view_ref': 'simple_pricing_order.view_simple_pricing_order_line_list'}"/>
+                        </page>
+                        <!-- TAB 2: VARIABEL JUAL TAMBAHAN -->
+                        <page string="Variabel Jual Tambahan">
+                            <field name="extra_line_ids"
+                                readonly="not can_edit">
+                                <list editable="bottom">
+                                    <field name="name"/>
+                                    <field name="percent"/>
+                                    <field name="amount"
+                                           widget="monetary"/>
+                                </list>
+                            </field>
+                        </page>
+                        <!-- TAB 3: RANGKUMAN -->
+                        <page string="Rekomendasi Harga Jual"
+                            groups="kalbiprod.group_kalbiprod_manager,kalbiprod.group_kalbiprod_rnd">
+                            <group>
+                                <field name="optimal_margin"
+                                    string="Markup Optimal (%)"
+                                    readonly="1"/>
+                            </group>
+                            <separator string="Saran Harga Jual"/>
+                            <!-- TANPA MARKUP -->
+                            <div class="o_row">
+                                <field name="price_no_markup"
+                                    widget="monetary"
+                                    options="{'currency_field': 'currency_id'}"
+                                    readonly="1"/>
+                                <button string="Pilih"
+                                    type="object"
+                                    name="action_select_price"
+                                    context="{'strategy': 'full'}"
+                                    invisible="not can_select_price"
+                                    class="btn-primary"/>
+                            </div>
+                            <!-- MARKUP 1/2 -->
+                            <div class="o_row">
+                                <field name="price_half_markup"
+                                    widget="monetary"
+                                    options="{'currency_field': 'currency_id'}"
+                                    readonly="1"/>
+                                <button string="Pilih"
+                                    type="object"
+                                    name="action_select_price"
+                                    context="{'strategy': 'full'}"
+                                    invisible="not can_select_price"
+                                    class="btn-primary"/>
+                            </div>
+                            <!-- MARKUP OPTIMAL -->
+                            <div class="o_row">
+                                <field name="price_full_markup"
+                                    widget="monetary"
+                                    options="{'currency_field': 'currency_id'}"
+                                    readonly="1"/>
+                                <button string="Pilih"
+                                    type="object"
+                                    name="action_select_price"
+                                    context="{'strategy': 'full'}"
+                                    invisible="not can_select_price"
+                                    class="btn-primary"/>
+                            </div>
+                            <p class="text-muted">
+                                Harga jual dihitung dari modal bahan dengan skema markup dinamis.
+                            </p>
+                        </page>
+                    </notebook>
+                    <!-- FOOTER TOTAL -->
+                    <group class="oe_subtotal_footer oe_left">
+                        <field name="currency_id" invisible="1"/>
+                        <field name="amount_untaxed"
+                               string="Total Bahan"
+                               widget="monetary"
+                               options="{'currency_field': 'currency_id'}"/>
+                        <field name="extra_amount"
+                               string="Variabel Tambahan"
+                               widget="monetary"
+                               options="{'currency_field': 'currency_id'}"/>
+                        <field name="amount_total"
+                               string="Total Biaya Produk"
+                               widget="monetary"
+                               options="{'currency_field': 'currency_id'}"/>
+                        <separator/>
+                        <group>
+                            <field name="selected_price"
+                                widget="monetary"
+                                options="{'currency_field': 'currency_id'}"
+                                readonly="1"/>
+                            <field name="selected_strategy" readonly="1"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <!-- LINE LIST VIEW -->
+    <record id="view_simple_pricing_order_line_list" model="ir.ui.view">
+        <field name="name">simple.pricing.order.line.list</field>
+        <field name="model">simple.pricing.order.line</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="product_id"/>
+                <field name="qty"/>
+                <field name="uom_id"/>
+                <field name="price_unit"
+                       widget="monetary"
+                       options="{'currency_field': 'currency_id'}"/>
+                <field name="subtotal"
+                       widget="monetary"
+                       options="{'currency_field': 'currency_id'}"/>
+            </list>
+        </field>
+    </record>
+    <!-- HEADER LIST -->
+    <record id="view_simple_pricing_order_list" model="ir.ui.view">
+        <field name="name">simple.pricing.order.list</field>
+        <field name="model">simple.pricing.order</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="date"/>
+                <field name="amount_total"
+                    string="Total Biaya"
+                    widget="monetary"
+                    options="{'currency_field': 'currency_id'}"/>
+                <field name="selected_price"
+                    string="Harga Jual"
+                    widget="monetary"
+                    options="{'currency_field': 'currency_id'}"/>
+                <field name="selected_strategy"
+                    string="Strategi"/>
+            </list>
+        </field>
+    </record>
+    <!-- ACTION -->
+    <record id="action_simple_pricing_order" model="ir.actions.act_window">
+        <field name="name">List Produk</field>
+        <field name="res_model">simple.pricing.order</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>
