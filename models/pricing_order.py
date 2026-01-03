@@ -134,7 +134,7 @@ class SimplePricingOrder(models.Model):
             order.extra_amount = extra
             order.amount_total = base + tax + extra
 
-    @api.model
+    @api.model_create_multi
     def create(self, vals_list):
         orders = super().create(vals_list)
 
@@ -148,12 +148,9 @@ class SimplePricingOrder(models.Model):
             if not order.title:
                 order.title = order.name
 
-            has_packing = order.extra_line_ids.filtered(lambda x: x.is_default_packing)
-
-            if not has_packing:
-                self.env["simple.pricing.order.extra"].create(
+            if not order.extra_line_ids.filtered(lambda x: x.is_default_packing):
+                order.extra_line_ids.create(
                     {
-                        "order_id": order.id,
                         "name": "Packing Tambahan",
                         "percent": 5.0,
                         "is_default_packing": True,
@@ -173,19 +170,17 @@ class SimplePricingOrder(models.Model):
                 order.target_margin = 0.0
 
     @api.depends("amount_untaxed", "extra_amount")
-    def _compute_optimal_pricing(self):
+    def _compute_pricing(self):
         for order in self:
             base = order.amount_untaxed or 0.0
             extra = order.extra_amount or 0.0
+            base_cost = base + extra
 
-            markup = 0.0
-
+            # === Optimal Margin ===
             if base <= 0:
                 markup = 0.0
-
             elif extra <= 0:
                 markup = 50.0
-
             else:
                 ratio = (base / extra) * 100
                 if ratio <= 30:
@@ -199,12 +194,6 @@ class SimplePricingOrder(models.Model):
 
             order.optimal_margin = markup
             order.optimal_price = base + (base * markup / 100)
-
-    @api.depends("amount_untaxed", "extra_amount", "optimal_margin")
-    def _compute_price_suggestions(self):
-        for order in self:
-            base_cost = order.amount_untaxed + order.extra_amount
-            markup = order.optimal_margin or 0.0
 
             order.price_no_markup = base_cost
             order.price_half_markup = base_cost * (1 + (markup / 2) / 100)
@@ -271,19 +260,22 @@ class SimplePricingOrderLine(models.Model):
     def _compute_amount(self):
         for line in self:
             line.subtotal = line.qty * line.price_unit
-            if line.tax_ids:
-                taxes = line.tax_ids.compute_all(
-                    line.price_unit,
-                    currency=line.currency_id,
-                    quantity=line.qty,
-                    product=line.product_id,
-                    partner=False,
-                )
-                line.tax_amount = taxes["total_included"] - taxes["total_excluded"]
-                line.total = taxes["total_included"]
-            else:
+
+            if not line.tax_ids:
                 line.tax_amount = 0.0
                 line.total = line.subtotal
+                continue
+
+            taxes_res = line.tax_ids._origin.compute_all(
+                line.price_unit,
+                currency=line.currency_id,
+                quantity=line.qty,
+                product=line.product_id,
+                partner=False,
+            )
+
+            line.tax_amount = taxes_res["total_included"] - taxes_res["total_excluded"]
+            line.total = taxes_res["total_included"]
 
 
 class SimplePricingOrderExtra(models.Model):
