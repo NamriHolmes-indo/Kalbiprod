@@ -16,7 +16,7 @@ Modul ini berfokus pada **perhitungan harga berbasis biaya (cost-based pricing)*
 - Mengurangi kesalahan perhitungan manual
 
 ---
-![Preview](odoo.png)
+![Preview](./static/description/odoo.png)
 
 ## ⚙️ Fitur Utama
 
