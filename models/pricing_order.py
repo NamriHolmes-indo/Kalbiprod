@@ -1,11 +1,10 @@
 from odoo import models, fields, api
 
 
-class SimplePricingOrder(models.Model):
-    _name = "simple.pricing.order"
+class KalbilianProd(models.Model):
+    _name = "kalbilian.produk"
     _description = "Simple Pricing Order"
 
-    name = fields.Char(string="Judul Produk", default="New", copy=False)
     title = fields.Char(string="Judul / Nama Produk", default="New", required=True)
     _rec_name = "title"
 
@@ -13,7 +12,7 @@ class SimplePricingOrder(models.Model):
     note = fields.Text(string="Notes")
 
     line_ids = fields.One2many(
-        "simple.pricing.order.line", "order_id", string="Order Lines"
+        "kalbilian.produk.line", "order_id", string="Order Lines"
     )
 
     amount_untaxed = fields.Monetary(
@@ -31,7 +30,7 @@ class SimplePricingOrder(models.Model):
     )
 
     extra_line_ids = fields.One2many(
-        "simple.pricing.order.extra", "order_id", string="Variabel Jual Tambahan"
+        "kalbilian.produk.extra", "order_id", string="Variabel Jual Tambahan"
     )
 
     extra_amount = fields.Monetary(
@@ -134,19 +133,46 @@ class SimplePricingOrder(models.Model):
             order.extra_amount = extra
             order.amount_total = base + tax + extra
 
+    @api.depends("amount_untaxed", "extra_amount")
+    def _compute_optimal_pricing(self):
+        for order in self:
+            base = order.amount_untaxed or 0.0
+            extra = order.extra_amount or 0.0
+
+            markup = 0.0
+
+            if base <= 0:
+                markup = 0.0
+
+            elif extra <= 0:
+                markup = 50.0
+
+            else:
+                ratio = (base / extra) * 100
+                if ratio <= 30:
+                    markup = 50.0
+                elif ratio <= 50:
+                    markup = 75.0
+                elif ratio <= 100:
+                    markup = 100.0
+                else:
+                    markup = 150.0
+
+            order.optimal_margin = markup
+            order.optimal_price = base + (base * markup / 100)
+
     @api.model_create_multi
     def create(self, vals_list):
         orders = super().create(vals_list)
 
         for order in orders:
-            if order.name == "New":
-                order.name = (
-                    self.env["ir.sequence"].next_by_code("simple.pricing.order")
-                    or "S00001"
+            if order.title == "New":
+                order.title = (
+                    self.env["ir.sequence"].next_by_code("kalbilian.produk") or "S00001"
                 )
 
             if not order.title:
-                order.title = order.name
+                order.title = order.title
 
             if not order.extra_line_ids.filtered(lambda x: x.is_default_packing):
                 order.extra_line_ids.create(
@@ -202,7 +228,7 @@ class SimplePricingOrder(models.Model):
     @api.onchange("title")
     def _onchange_title_sync_name(self):
         if self.title:
-            self.name = self.title
+            self.title = self.title
 
     def action_select_price(self):
         self.ensure_one()
@@ -222,12 +248,22 @@ class SimplePricingOrder(models.Model):
             }
         )
 
+    @api.depends("amount_untaxed", "extra_amount", "optimal_margin")
+    def _compute_price_suggestions(self):
+        for order in self:
+            base_cost = order.amount_untaxed + order.extra_amount
+            markup = order.optimal_margin or 0.0
 
-class SimplePricingOrderLine(models.Model):
-    _name = "simple.pricing.order.line"
+            order.price_no_markup = base_cost
+            order.price_half_markup = base_cost * (1 + (markup / 2) / 100)
+            order.price_full_markup = base_cost * (1 + markup / 100)
+
+
+class KalbilianProdLine(models.Model):
+    _name = "kalbilian.produk.line"
     _description = "Simple Pricing Order Line"
 
-    order_id = fields.Many2one("simple.pricing.order", ondelete="cascade")
+    order_id = fields.Many2one("kalbilian.produk", ondelete="cascade")
 
     product_id = fields.Many2one("product.product", string="Product", required=True)
 
@@ -278,8 +314,8 @@ class SimplePricingOrderLine(models.Model):
             line.total = taxes_res["total_included"]
 
 
-class SimplePricingOrderExtra(models.Model):
-    _name = "simple.pricing.order.extra"
+class KalbilianProdExtra(models.Model):
+    _name = "kalbilian.produk.extra"
     _description = "Pricing Extra Variable"
     _sql_constraints = [
         (
@@ -289,7 +325,7 @@ class SimplePricingOrderExtra(models.Model):
         )
     ]
 
-    order_id = fields.Many2one("simple.pricing.order", ondelete="cascade")
+    order_id = fields.Many2one("kalbilian.produk", ondelete="cascade")
 
     name = fields.Char(string="Nama Variabel", required=True)
 
